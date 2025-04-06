@@ -82,6 +82,44 @@ async function run() {
       res.send(result)
     })
 
+    // save a bid to db 
+    app.post('/add-bid', async (req, res) => {
+      const bidData = req.body;
+
+      // 1. if place a bit already in this job
+      const query = { email: bidData.email, jobId: bidData.jobId }
+      const alreadyExist = await bidsCollection.findOne(query);
+      if (alreadyExist) {
+        return res.status(400).send({ message: 'You have already apply bid on this job!' })
+      }
+
+      // save data in bidsCollection
+      const result = await bidsCollection.insertOne(bidData);
+
+      // increase bid count in JobsCollection
+      const filter = { _id: new ObjectId(bidData.jobId) };
+      const update = {
+        $inc: {
+          bid_count: 1
+        }
+      }
+      const updateBidCount = await jobsCollection.updateOne(filter, update)
+
+      res.send(result);
+    })
+    // get all bids for a specific user 
+    app.get('/bids', async (req, res) => {
+      const email = req.query.email;
+      const query = { email };
+      const result = await bidsCollection.find(query).toArray();
+
+      
+
+      res.send(result)
+    })
+
+
+
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
