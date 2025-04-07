@@ -126,7 +126,7 @@ async function run() {
     // update bid status
     app.patch('/bid-status-update/:id', async (req, res) => {
       const id = req.params.id;
-      const {status}  = req.body;
+      const { status } = req.body;
       const filter = { _id: new ObjectId(id) };
       const updated = {
         $set: {
@@ -136,6 +136,29 @@ async function run() {
       const result = await bidsCollection.updateOne(filter, updated)
       res.send(result);
 
+    })
+
+    // get All Jobs 
+    app.get('/all-jobs', async (req, res) => {
+      const filter = req.query.filter;
+      const search = req.query.search;
+      const sort = req.query.sort;
+
+      let options = {};
+      if (sort) {
+        options = { sort: { deadLine: sort === 'asc' ? 1 : -1 } }
+      }
+
+      let query = {
+        title: {
+          $regex: search, $options: 'i'
+        }
+      };
+      if (filter) {
+        query.category = filter;
+      }
+      const result = await jobsCollection.find(query, options).toArray();
+      res.send(result)
     })
 
     // Connect the client to the server	(optional starting in v4.7)
